@@ -31,36 +31,36 @@ def discriminator(img, scope, df_dim=64, reuse=False, train=True):
 
 def generator(img, scope, gf_dim=64, reuse=False, train=True):
 
-    bn = functools.partial(slim.batch_norm, scale=True, is_training=train,
-                           decay=0.9, epsilon=1e-5, updates_collections=None)
+     bn = functools.partial(slim.batch_norm, scale=True, is_training=train,
+                            decay=0.9, epsilon=1e-5, updates_collections=None)
 
-    def residule_block(x, dim, scope='res'):
-        y = tf.pad(x, [[0, 0], [1, 1], [1, 1], [0, 0]], "CONSTANT")
-        y = relu(bn(conv(y, dim, 3, 1, padding='VALID', scope=scope + '_conv1'), scope=scope + '_bn1'))
-        y = tf.pad(y, [[0, 0], [1, 1], [1, 1], [0, 0]], "CONSTANT")
-        y = bn(conv(y, dim, 3, 1, padding='VALID', scope=scope + '_conv2'), scope=scope + '_bn2')
-        return y + x
+     def residule_block(x, dim, scope='res'):
+         y = tf.pad(x, [[0, 0], [1, 1], [1, 1], [0, 0]], "REFLECT")
+         y = relu(bn(conv(y, dim, 3, 1, padding='VALID', scope=scope + '_conv1'), scope=scope + '_bn1'))
+         y = tf.pad(y, [[0, 0], [1, 1], [1, 1], [0, 0]], "REFLECT")
+         y = bn(conv(y, dim, 3, 1, padding='VALID', scope=scope + '_conv2'), scope=scope + '_bn2')
+         return y + x
 
-    with tf.variable_scope(scope + '_generator', reuse=reuse):
-        c0 = tf.pad(img, [[0, 0], [3, 3], [3, 3], [0, 0]], "CONSTANT")
-        c1 = relu(bn(conv(c0, gf_dim, 7, 1, padding='VALID', scope='c1_conv'), scope='c1_bn'))
-        c2 = relu(bn(conv(c1, gf_dim * 2, 3, 2, scope='c2_conv'), scope='c2_bn'))
-        c3 = relu(bn(conv(c2, gf_dim * 4, 3, 2, scope='c3_conv'), scope='c3_bn'))
+     with tf.variable_scope(scope + '_generator', reuse=reuse):
+         c0 = tf.pad(img, [[0, 0], [3, 3], [3, 3], [0, 0]], "REFLECT")
+         c1 = relu(bn(conv(c0, gf_dim, 7, 1, padding='VALID', scope='c1_conv'), scope='c1_bn'))
+         c2 = relu(bn(conv(c1, gf_dim * 2, 3, 2, scope='c2_conv'), scope='c2_bn'))
+         c3 = relu(bn(conv(c2, gf_dim * 4, 3, 2, scope='c3_conv'), scope='c3_bn'))
 
-        r1 = residule_block(c3, gf_dim * 4, scope='r1')
-        r2 = residule_block(r1, gf_dim * 4, scope='r2')
-        r3 = residule_block(r2, gf_dim * 4, scope='r3')
-        r4 = residule_block(r3, gf_dim * 4, scope='r4')
-        r5 = residule_block(r4, gf_dim * 4, scope='r5')
-        r6 = residule_block(r5, gf_dim * 4, scope='r6')
-        r7 = residule_block(r6, gf_dim * 4, scope='r7')
-        r8 = residule_block(r7, gf_dim * 4, scope='r8')
-        r9 = residule_block(r8, gf_dim * 4, scope='r9')
+         r1 = residule_block(c3, gf_dim * 4, scope='r1')
+         r2 = residule_block(r1, gf_dim * 4, scope='r2')
+         r3 = residule_block(r2, gf_dim * 4, scope='r3')
+         r4 = residule_block(r3, gf_dim * 4, scope='r4')
+         r5 = residule_block(r4, gf_dim * 4, scope='r5')
+         r6 = residule_block(r5, gf_dim * 4, scope='r6')
+         r7 = residule_block(r6, gf_dim * 4, scope='r7')
+         r8 = residule_block(r7, gf_dim * 4, scope='r8')
+         r9 = residule_block(r8, gf_dim * 4, scope='r9')
 
-        d1 = relu(bn(deconv(r9, gf_dim * 2, 3, 2, scope='d1_dconv'), scope='d1_bn'))
-        d2 = relu(bn(deconv(d1, gf_dim, 3, 2, scope='d2_dconv'), scope='d2_bn'))
-        d2 = tf.pad(d2, [[0, 0], [3, 3], [3, 3], [0, 0]], "CONSTANT")
-        pred = conv(d2, 3, 7, 1, padding='VALID', scope='pred_conv')
-        pred = tf.nn.tanh(pred)
+         d1 = relu(bn(deconv(r9, gf_dim * 2, 3, 2, scope='d1_dconv'), scope='d1_bn'))
+         d2 = relu(bn(deconv(d1, gf_dim, 3, 2, scope='d2_dconv'), scope='d2_bn'))
+         d2 = tf.pad(d2, [[0, 0], [3, 3], [3, 3], [0, 0]], "REFLECT")
+         pred = conv(d2, 3, 7, 1, padding='VALID', scope='pred_conv')
+         pred = tf.nn.tanh(pred, name="output_image")
 
-        return pred
+         return pred
